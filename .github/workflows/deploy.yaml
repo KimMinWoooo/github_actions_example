@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main 
-# Dockerhub에 각 이미지들을 올릴 레포지토리가 필요.
+# Dockerhub에 각 이미지들을 올릴 레포지토리가 필요
 
 jobs:
   build:
