@@ -3,33 +3,24 @@ on:
   push:
     branches:
       - main 
-<<<<<<< HEAD
 # Dockerhub에 각 이미지들을 올릴 레포지토리가 필요
 # 수정수정수정
-=======
-# Dockerhub에 각 이미지들을 올릴 레포지토리가 필요.
-
->>>>>>> b37e7b0 (feat(init): github actions yaml 파일의 설명을 추가합니다.)
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-<<<<<<< HEAD
       - uses: actions/checkout@v3 # Docker Username, password를 github에 설정 (Settings -> Secrets and vatiables  -> Actions secrets)
-=======
-      - uses: actions/checkout@v3 # Docker Username, password를 github에 설정
->>>>>>> b37e7b0 (feat(init): github actions yaml 파일의 설명을 추가합니다.)
       - run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-      - run: docker build -t minwoooo3396/react-test-app -f ./frontend/Dockerfile.dev ./frontend
-      - run: docker run -e CI=true minwoooo3396/react-test-app npm test
+      - run: docker build -t eddykim3396/react-test-app -f ./frontend/Dockerfile.dev ./frontend
+      - run: docker run -e CI=true eddykim3396/react-test-app npm test
 
-      - run: docker build -t minwoooo3396/docker-frontend ./frontend
-      - run: docker build -t minwoooo3396/docker-nginx ./nginx
-      - run: docker build -t minwoooo3396/docker-backend ./backend
+      - run: docker build -t eddykim3396/docker-frontend ./frontend
+      - run: docker build -t eddykim3396/docker-nginx ./nginx
+      - run: docker build -t eddykim3396/docker-backend ./backend
 # 여기 예제의 경우에는 밑의 3개의 레포지토리를 생성하고 이미지를 푸시하는 상태
-      - run: docker push minwoooo3396/docker-frontend
-      - run: docker push minwoooo3396/docker-nginx
-      - run: docker push minwoooo3396/docker-backend
+      - run: docker push eddykim3396/docker-frontend
+      - run: docker push eddykim3396/docker-nginx
+      - run: docker push eddykim3396/docker-backend
 
       - name: Generate deployment package
         run: zip -r deploy.zip . -x '*.git*'
@@ -37,13 +28,8 @@ jobs:
       - name: Deploy to EB
         uses: einaregilsson/beanstalk-deploy@v18
         with:
-<<<<<<< HEAD
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY }} # IAM으로 역할 부여하여 받은 엑세스 키와 시크릿 키를 github에 설정 
           aws_secret_key: ${{ secrets.AWS_SECRET_KEY }} # (Settings -> Secrets and vatiables  -> Actions secrets)
-=======
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY }} # IAM으로 역할 부여하여 받은 엑세스 키와 시크릿 키를 github에 설정
-          aws_secret_key: ${{ secrets.AWS_SECRET_KEY }}
->>>>>>> b37e7b0 (feat(init): github actions yaml 파일의 설명을 추가합니다.)
           application_name: fullstack-docker-app
           environment_name: Fullstack-docker-app-env-1
           existing_bucket_name: elasticbeanstalk-ap-northeast-2-972153559337
