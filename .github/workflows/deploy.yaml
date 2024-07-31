@@ -2,7 +2,7 @@ name: Deploy FullStackApp
 on:
   push:
     branches:
-      - main 
+      - main
 # Dockerhub에 각 이미지들을 올릴 레포지토리가 필요
 # 수정수정수정232
 jobs:
@@ -17,7 +17,7 @@ jobs:
       - run: docker build -t eddykim3396/docker-frontend ./frontend
       - run: docker build -t eddykim3396/docker-nginx ./nginx
       - run: docker build -t eddykim3396/docker-backend ./backend
-# 여기 예제의 경우에는 밑의 3개의 레포지토리를 생성하고 이미지를 푸시하는 상태
+      # 여기 예제의 경우에는 밑의 3개의 레포지토리를 생성하고 이미지를 푸시하는 상태
       - run: docker push eddykim3396/docker-frontend
       - run: docker push eddykim3396/docker-nginx
       - run: docker push eddykim3396/docker-backend
@@ -28,12 +28,11 @@ jobs:
       - name: Deploy to EB
         uses: einaregilsson/beanstalk-deploy@v18
         with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY }} # IAM으로 역할 부여하여 받은 엑세스 키와 시크릿 키를 github에 설정 
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY }} # IAM으로 역할 부여하여 받은 엑세스 키와 시크릿 키를 github에 설정
           aws_secret_key: ${{ secrets.AWS_SECRET_KEY }} # (Settings -> Secrets and vatiables  -> Actions secrets)
           application_name: fullstack-docker-app
-          environment_name: Fullstack-docker-app-env-1
+          environment_name: fullstack-docker-app-env
           existing_bucket_name: elasticbeanstalk-ap-northeast-2-972153559337
           region: ap-northeast-2
           version_label: ${{ github.sha }}
           deployment_package: deploy.zip
-
