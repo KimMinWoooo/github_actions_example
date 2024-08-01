@@ -82,3 +82,4 @@ jobs:
           service: main-service
           cluster: main-cluster
           wait-for-service-stability: true
+          wait-for-minutes: 10 # 기본값인 5분에서 10분으로 증가
