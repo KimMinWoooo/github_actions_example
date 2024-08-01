@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,12 +23,10 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-        with:
-          region: ${{ secrets.AWS_REGION }}  # AWS 리전을 환경 변수로 지정
 
       - name: Build and push Docker images
         env:
-          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY_FRONTEND: docker-frontend
           ECR_REPOSITORY_NGINX: docker-nginx
           ECR_REPOSITORY_BACKEND: docker-backend
@@ -46,14 +49,11 @@ jobs:
       - name: Deploy to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-          region: ${{ secrets.AWS_REGION }}  # AWS 리전을 환경 변수로 지정
           cluster: your-ecs-cluster-name
           service: your-ecs-service-name
           task-definition: your-task-definition.json
           image: |
-            $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
-            $ECR_REGISTRY/$ECR_REPOSITORY_NGINX:$IMAGE_TAG
-            $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG
-            $ECR_REGISTRY/$ECR_REPOSITORY_MYSQL:$IMAGE_TAG
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_FRONTEND }}:${{ env.IMAGE_TAG }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_NGINX }}:${{ env.IMAGE_TAG }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_BACKEND }}:${{ env.IMAGE_TAG }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_MYSQL }}:${{ env.IMAGE_TAG }}
