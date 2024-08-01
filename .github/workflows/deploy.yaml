@@ -18,10 +18,12 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          region: ${{ secrets.AWS_REGION }}  # AWS 리전을 환경 변수로 지정
 
       - name: Build and push Docker images
         env:
-          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com
+          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           ECR_REPOSITORY_FRONTEND: docker-frontend
           ECR_REPOSITORY_NGINX: docker-nginx
           ECR_REPOSITORY_BACKEND: docker-backend
@@ -46,7 +48,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-          region: ap-northeast-2
+          region: ${{ secrets.AWS_REGION }}  # AWS 리전을 환경 변수로 지정
           cluster: your-ecs-cluster-name
           service: your-ecs-service-name
           task-definition: your-task-definition.json
