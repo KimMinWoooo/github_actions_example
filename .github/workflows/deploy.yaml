@@ -1,38 +1,57 @@
 name: Deploy FullStackApp
+
 on:
   push:
     branches:
       - main
-# Dockerhub에 각 이미지들을 올릴 레포지토리가 필요
-# 수정수정수정232
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3 # Docker Username, password를 github에 설정 (Settings -> Secrets and vatiables  -> Actions secrets)
-      - run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-      - run: docker build -t eddykim3396/react-test-app -f ./frontend/Dockerfile.dev ./frontend
-      - run: docker run -e CI=true eddykim3396/react-test-app npm test
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - run: docker build -t eddykim3396/docker-frontend ./frontend
-      - run: docker build -t eddykim3396/docker-nginx ./nginx
-      - run: docker build -t eddykim3396/docker-backend ./backend
-      # 여기 예제의 경우에는 밑의 3개의 레포지토리를 생성하고 이미지를 푸시하는 상태
-      - run: docker push eddykim3396/docker-frontend
-      - run: docker push eddykim3396/docker-nginx
-      - run: docker push eddykim3396/docker-backend
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push Docker images
+        env:
+          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com
+          ECR_REPOSITORY_FRONTEND: docker-frontend
+          ECR_REPOSITORY_NGINX: docker-nginx
+          ECR_REPOSITORY_BACKEND: docker-backend
+          ECR_REPOSITORY_MYSQL: docker-mysql
+          IMAGE_TAG: latest
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG ./frontend
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_NGINX:$IMAGE_TAG ./nginx
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG ./backend
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_MYSQL:$IMAGE_TAG ./mysql
+
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_NGINX:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_MYSQL:$IMAGE_TAG
 
       - name: Generate deployment package
         run: zip -r deploy.zip . -x '*.git*'
 
-      - name: Deploy to EB
-        uses: einaregilsson/beanstalk-deploy@v18
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY }} # IAM으로 역할 부여하여 받은 엑세스 키와 시크릿 키를 github에 설정
-          aws_secret_key: ${{ secrets.AWS_SECRET_KEY }} # (Settings -> Secrets and vatiables  -> Actions secrets)
-          application_name: fullstack-docker-app
-          environment_name: fullstack-docker-app-env
-          existing_bucket_name: elasticbeanstalk-ap-northeast-2-972153559337
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           region: ap-northeast-2
-          version_label: ${{ github.sha }}
-          deployment_package: deploy.zip
+          cluster: your-ecs-cluster-name
+          service: your-ecs-service-name
+          task-definition: your-task-definition.json
+          image: |
+            $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
+            $ECR_REGISTRY/$ECR_REPOSITORY_NGINX:$IMAGE_TAG
+            $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG
+            $ECR_REGISTRY/$ECR_REPOSITORY_MYSQL:$IMAGE_TAG
